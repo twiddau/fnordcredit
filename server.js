@@ -4,7 +4,7 @@ var winston = require('winston');
 var passwordHash = require('password-hash');
 var r = require('rethinkdb');
 var config = require('./config');
-
+var Client = require('pg').Client;
 
 if (config.mqtt.enable) {
     var mqtt = require('mqtt');
@@ -27,15 +27,8 @@ process.stdin.resume();
 winston.add(winston.transports.File, { filename: 'credit.log', json: false });
 var users;
 
-
-var connection = null;
-r.connect({host: config.rethinkdb.host, port: config.rethinkdb.port, db: config.rethinkdb.db}, function (err, conn) {
-    if (err) {
-        criticalError('Couldn\'t connect to RethinkDB.');
-    }
-    connection = conn;
-    serverStart(connection);
-});
+var connection = new Client(config.postgres);
+connection.connect();
 
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -46,6 +39,8 @@ app.use(function(req, res, next) {
 app.use('/', express.static(__dirname + '/static'));
 app.use(bodyParser());
 
+
+serverStart(connection);
 
 
 function serverStart(connection) {
@@ -93,6 +88,7 @@ function serverStart(connection) {
             });
         });
 
+
     var server = server.listen(8000, function () {
         winston.info('Server started!');
 
@@ -100,12 +96,10 @@ function serverStart(connection) {
             if (sock.broadcast) {
                 getAllUsersAsync(function (err, users) {
                     if (err) {
-                        return res.send(500, 'Error retrieving users from database');
+                        winston.error('Error retrieving users from database: ' + err);
                     }
                     sock.broadcast.emit('accounts', JSON.stringify(users));
                 });
-
-                sock.broadcast.emit('accounts', JSON.stringify(users));
             }
         }, 10 * 1000);
 
@@ -216,7 +210,7 @@ app.post('/user/rename', function (req, res) {
                     return res.send(500, 'Error retrieving users from database');
                 }
 
-                sock.broadcast.emit('accounts', JSON.stringify(users));
+                if (sock.broadcast) sock.broadcast.emit('accounts', JSON.stringify(users));
                 sock.emit('accounts', JSON.stringify(users));
 
                 res.send(200, JSON.stringify(user));
@@ -281,6 +275,7 @@ app.post('/user/credit', function (req, res) {
                     return;
                 }
             }
+            winston.info(user.credit);
             updateCredit(user, delta, description, product);
 
             getAllUsersAsync(function (err, users) {
@@ -407,23 +402,24 @@ app.get('/token/:token', function (req, res) {
 
 
 function checkUserPin(username, pincode, cbOk, cbFail) {
-    r.table('users').get(username).run(connection, function (err, user) {
 
-        if (err || user == null) {
-            winston.error('Could\'nt check PIN for user ' + username);
+    connection.query('SELECT name, pincode, token FROM fnordcredit.users WHERE name = $1', [username], function (err, result) {
+
+        if (err || result.rowCount == 0) {
+            winston.error('Couldn\'t check PIN for user ' + username + ':' + err );
             cbFail();
             return;
         }
 
+        user = result.rows[0];
         dbPin = user.pincode;
         dbToken = user.token;
 
         if ( dbPin == undefined || dbPin == null || passwordHash.verify(pincode, dbPin) || (dbToken != undefined && dbToken != null && dbToken == pincode) ) {
-            cbOk();
+            return cbOk();
         } else {
-            cbFail();
+            return cbFail();
         }
-
     });
 }
 
@@ -436,83 +432,135 @@ function updatePin(username, newPincode, cb) {
         hashedPincode = passwordHash.generate(newPincode);
     }
 
-    r.table('users').get(username).update({pincode: hashedPincode}).run(connection, cb);
+    connection.query('UPDATE fnordcredit.users SET pincode = $1 WHERE name = $2', [hashedPincode, username], function(err, res) {
+        if (err) {
+            return cb(err);
+        }
+        return cb(null);
+    });
 }
 
 function updateToken(username, newToken, cb) {
-
-    r.table('users').get(username).update({token: newToken}).run(connection, cb);
+    connection.query('UPDATE fnordcredit.users SET token = $1 WHERE name = $2', [newToken, username], function(err, res) {
+        if (err) {
+            return cb(err);
+        }
+        return cb(null);
+    });
 }
 
 function getUserAsync(username, cb) {
-    r.table('users').get(username).pluck("name", "lastchanged", "credit").run(connection, cb);
+    connection.query("SELECT name, credit, lastchanged FROM fnordcredit.users", function(err, res) {
+
+        if (err) {
+            return cb(err, null);
+        }
+
+        if (res.rowCount == 1) {
+            cb(null, res.rows[0]);
+        } else {
+            cb(null, null);
+        }
+
+    });
 }
 
 function getFullUserAsync(username, cb) {
-    r.table('users').get(username).run(connection, cb);
+    connection.query("SELECT * FROM fnordcredit.users WHERE name = $1", [username], function(err, res) {
+
+        if (err) {
+            return cb(err, null);
+        }
+
+        if (res.rowCount == 1) {
+            cb(null, res.rows[0]);
+        } else {
+            cb(null, null);
+        }
+
+    });
 }
 
 function getUserByTokenAsync(token, cb) {
-    r.table('users').filter({"token": token}).pluck("name", "lastchanged", "credit").run(connection, function(err, cursor) {
 
-        cursor.next(function (err, row) {
-            if (err) return cb(err, null);
+    connection.query("SELECT name, credit, lastchanged FROM fnordcredit.users WHERE token = $1", [token], function(err, res) {
 
-            return cb(err, row);
-        });
+        if (err) {
+            return cb(err, null);
+        }
+
+        if (res.rowCount == 1) {
+            cb(null, res.rows[0]);
+        } else {
+            cb(null, null);
+        }
+
     });
 }
 
 function getAllUsersAsync(cb) {
 
-    r.table('users').pluck("name", "lastchanged", "credit").run(connection, function (err, table) {
-
+    connection.query("SELECT name, credit, lastchanged FROM fnordcredit.users", function(err, res) {
         if (err) {
             return cb(err, null);
         }
 
-        table.toArray(cb);
-    })
+        if (res.rowCount > 0) {
+            cb(null, res.rows);
+        } else {
+            cb(null, []);
+        }
+    });
 }
 
 function getUserTransactionsAsync(username, cb) {
-    r.table('transactions')
-        .filter(r.row('username').eq(username))
-        .run(connection, function (err, cursor) {
 
-            if (err) {
-                return cb(err, null);
-            }
+    connection.query("SELECT * FROM fnordcredit.transactions WHERE username = $1", [username], function(err, res) {
+        if (err) {
+            return cb(err, null);
+        }
 
-            cursor.toArray(cb);
-        });
+        if (res.rowCount > 0) {
+            cb(null, res.rows);
+        } else {
+            cb(null, []);
+        }
+    });
 }
 
 function getAllTransactionsAsync(cb) {
-    r.table('transactions')
-        .run(connection, function (err, table) {
-            if (err) {
-                return cb(err, null);
-            }
+    connection.query("SELECT * FROM fnordcredit.transactions", function(err, res) {
+        if (err) {
+            return cb(err, null);
+        }
 
-            table.toArray(cb);
-        });
+        if (res.rowCount > 0) {
+            cb(null, res.rows);
+        } else {
+            cb(null, []);
+        }
+    });
 }
 
 
 function getAllProductsAsync(cb) {
-    r.table('products').orderBy('order').run(connection, function (err, table) {
+    connection.query("SELECT * FROM fnordcredit.products", function(err, res) {
         if (err) {
             return cb(err, null);
         }
 
-        table.toArray(cb);
+        if (res.rowCount > 0) {
+            cb(null, res.rows);
+        } else {
+            cb(null, []);
+        }
     });
 }
 
 
 function addUser(username, res) {
 
+    /*
     r.table("users").insert({
         name: username,
         credit: 0,
@@ -537,7 +585,7 @@ function addUser(username, res) {
                 return true;
             });
         }
-    });
+    });*/
 }
 
 function renameUser(user, newname, pincode, res) {
@@ -548,7 +596,7 @@ function renameUser(user, newname, pincode, res) {
         pincode = passwordHash.generate(pincode);
     }
 
-    r.table('users').insert({
+    /*r.table('users').insert({
         name: newname,
         credit: user.credit,
         lastchanged: r.now(),
@@ -577,7 +625,7 @@ function renameUser(user, newname, pincode, res) {
                     }
                 });
         }
-    });
+    });*/
 }
 
 function updateCredit(user, delta, description, product) {
@@ -585,36 +633,30 @@ function updateCredit(user, delta, description, product) {
     description = description || null;
     product = product || null;
 
+    winston.info(user);
     user.credit += +delta;
     user.credit = Math.round(user.credit * 100) / 100;
-    user.lastchanged = Date.now();
 
-    var transaction = {
-        username: user.name,
-        delta: delta,
-        credit: user.credit,
-        time: r.now(),
-        description: description,
-        product: product
-    }
-
-    r.table("transactions").insert(transaction).run(connection, function (err) {
-        if (err) {
-            winston.error('Couldn\'t save transaction for user ' + user.name + err);
-        }
-
-        if (config.mqtt.enable) {
-            mqttPost('transactions', transaction);
-        }
-    });
-    r.table("users")
-        .filter({name: user.name})
-        .update({credit: user.credit, lastchanged: r.now()})
-        .run(connection, function (err) {
-            if (err) {
-                winston.error('Couldn\'t save transaction for user ' + user.name + err);
-            }
+    var rollback = function(connection, err) {
+        connection.query('ROLLBACK', function() {
+            winston.error('Couldn\'t save transaction for user: ' + err );
         });
+    };
+
+    connection.query('BEGIN', function(err, result) {
+        if(err) return rollback(connection);
+        connection.query( "INSERT INTO fnordcredit.transactions (username, delta, credit, description, product) VALUES ($1, $2, $3, $4, $5)", [user.name, delta, user.credit, description, product], function(err, result) {
+            if(err) return rollback(connection, err);
+            connection.query('UPDATE fnordcredit.users SET credit = $1, lastchanged = CURRENT_TIMESTAMP WHERE name = $2', [user.credit, user.name], function(err, result) {
+                if(err) return rollback(connection, err);
+                connection.query('COMMIT');
+            });
+        });
+    });
+
+    if (config.mqtt.enable) {
+        mqttPost('transactions', transaction);
+    }
 
     if (delta < 0) {
         sock.emit('ka-ching', JSON.stringify(users));

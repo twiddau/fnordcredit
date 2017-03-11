@@ -1,7 +1,9 @@
 var config = require('../config');
 var q = require("q");
 var r = require("rethinkdb");
+
 var connection = null;
+
 
 q.nfcall(r.connect, {host: config.rethinkdb.host, port: config.rethinkdb.port, db: config.rethinkdb.db})
 .then(function(con){
