@@ -43,6 +43,7 @@ docker run -d \
 	--network fnordcredit \
 	--link fnordcredit-rethinkdb:rethinkdb \
 	-v /srv/fnordcredit/config.js:/srv/fnordcredit/config.js:ro \
+	-v /srv/fnordcredit/img:/srv/fnordcredit/static/img:ro \
 	-e 8000:8000 \
 	xuio/fnordcredit
 
