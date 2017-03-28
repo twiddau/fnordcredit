@@ -53,6 +53,32 @@ docker exec fnordcredit node /srv/fnordcredit/tools/dbInit.js
 docker restart fnordcredit
 ```
 
+## Customization
+There is no admin interface. Customization can be done via  RethinkDB's Web Interface.
+
+### Products
+Insert new products via RethinkDB query.
+Example:
+```json
+{
+	"description":"Club-Mate",
+	"ean":"4029764001807",
+	"image":"/img/clubmate.png",
+	"name":"clubmate",
+	"order":10,
+	"price":1
+}
+```
+
+To add a product:
+```js
+r.db("fnordcredit").table("products").insert(
+	{<Object>}
+);
+```
+
+Product images can be uploaded to ```static/img```.
+
 ## License
 Copyright © 2014 
 	silsha &lt;hallo@silsha.me&gt;
