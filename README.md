@@ -33,7 +33,7 @@ docker run -d \
 ```
 
 ### Create config file
-Copy config-docker.js.example to /srv/fnordcredit/config.js on the host system
+Copy config-docker.js.example to ```/srv/fnordcredit/config.js``` on the host system
 
 ### Deploy Fnordcredit
 ```bash
