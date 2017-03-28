@@ -16,10 +16,47 @@ To start a local development server, have rethinkDB installed and running, then 
 
 As last step, start the local development server using ```npm start``` and point your browser to http://127.0.0.1:8000.
 
+## With Docker
+
+### Create network
+```bash
+docker network create fnordcredit
+```
+
+### Deploy Rethinkdb
+```bash
+docker run -d \
+	--name fnordcredit-rethinkdb \
+	--network fnordcredit \
+	-v /srv/fnordcredit/db:/data \
+	rethinkdb
+```
+
+### Create config file
+Copy config-docker.js.example to /srv/fnordcredit/config.js on the host system
+
+### Deploy Fnordcredit
+```bash
+# create container
+docker run -d \
+	--name fnordcredit \
+	--network fnordcredit \
+	--link fnordcredit-rethinkdb:rethinkdb \
+	-v /srv/fnordcredit/config.js:/srv/fnordcredit/config.js:ro \
+	-e 8000:8000 \
+	xuio/fnordcredit
+
+# setup DB
+docker exec fnordcredit node /srv/fnordcredit/tools/dbInit.js
+
+docker restart fnordcredit
+```
+
 ## License
 Copyright © 2014 
 	silsha &lt;hallo@silsha.me&gt;
 	Twi &lt;twi@entropia.de&gt;
+	xuio &lt;xuio@entropia.de&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
