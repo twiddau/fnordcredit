@@ -1,4 +1,4 @@
-var socket = io.connect('http://' + window.location.host);
+var socket = io.connect(window.location.protocol + '//' + window.location.host);
 var accounts = [];
 var filter = ""
 var sortby = "time" //valid values: time abc zyx
