@@ -24,7 +24,7 @@
                 <div class="panel-body">
                     {#products}
                     <button class="btn btn-danger btn-lg btn-credit-action" data-credit="{@math key=0 method="subtract" operand=price/}" data-name="{name}" data-desc="{description}" data-ean="{ean}">
-                    <img src="{image}" style="height: 90px"><br />
+                    <img src="{image}"><br />
                     {@currency value=price prefix="-" /}
                     </button>
                     {/products}
