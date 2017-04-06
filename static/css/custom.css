@@ -124,7 +124,11 @@ ul.navbar-nav {
 .btn-credit-action {
     padding: 0;
     width: 115px;
-    height: 200px;
+    height: 115px;
+}
+
+.btn-product {
+    height: 250px;
 }
 
 .fullscreen {
@@ -169,7 +173,7 @@ ul.navbar-nav {
     
 }
 
-.btn-credit-action > img {
+.btn-product > img {
     max-width: 110px;
     height: 195px;
 }
