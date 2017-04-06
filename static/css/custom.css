@@ -162,3 +162,14 @@ ul.navbar-nav {
     font-size: 3em;
     height: 66%;
 }
+
+.uilock-message > img {
+    max-height: 80%;
+    padding: 20px;
+    
+}
+
+.btn-credit-action > img {
+    max-width: 110px;
+    max-height: 110px;
+}
