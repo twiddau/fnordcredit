@@ -23,16 +23,11 @@
                 </div>
                 <div class="panel-body">
                     {#products}
-                    <button class="btn btn-danger btn-lg btn-credit-action" data-credit="{@math key=0 method="subtract" operand=price/}" data-name="{name}" data-desc="{description}" data-ean="{ean}">
-                    <img src="{image}" style="height: 90px"><br />
+                    <button class="btn btn-danger btn-lg btn-credit-action btn-product" data-credit="{@math key=0 method="subtract" operand=price/}" data-name="{name}" data-desc="{description}" data-ean="{ean}">
+                    <img src="{image}"><br />
                     {@currency value=price prefix="-" /}
                     </button>
                     {/products}
-                    <br />
-                    <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-0.5" data-desc="{@currency value="-0.5" /}">{@currency value="-0.5" /}</button>
-                    <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-1.0" data-desc="{@currency value="-1.0" /}">{@currency value="-1.0" /}</button>
-                    <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-2.0" data-desc="{@currency value="-2.0" /}">{@currency value="-2.0" /}</button>
-                    <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-5.0" data-desc="{@currency value="-5.0" /}">{@currency value="-5.0" /}</button>
                 </div>
             </div>
 

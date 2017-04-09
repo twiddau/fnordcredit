@@ -127,6 +127,10 @@ ul.navbar-nav {
     height: 115px;
 }
 
+.btn-product {
+    height: 250px;
+}
+
 .fullscreen {
     position: fixed;
     width: 100%;
@@ -161,4 +165,15 @@ ul.navbar-nav {
 .uilock-message {
     font-size: 3em;
     height: 66%;
+}
+
+.uilock-message > img {
+    max-height: 80%;
+    padding: 20px;
+    
+}
+
+.btn-product > img {
+    max-width: 110px;
+    height: 195px;
 }
