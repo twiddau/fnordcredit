@@ -6,14 +6,14 @@ Innovative, easy to use credit system for multiple users that comes with an intu
 ## Development
 fnordcredit is written in Javascript/Node.js/jQuery/rethinkDB.
 
-To start a local development server, have rethinkDB installed and running, then do the following:
-
+To start a local development server, have [rethinkDB](https://rethinkdb.com/) installed and running, then do the following:
+```bash
 	git clone https://github.com/entropia/fnordcredit.git
 	cd fnordcredit
 	npm install
 	cp config.js.example config.js
 	node tools/dbInit.js
-
+```
 As last step, start the local development server using ```npm start``` and point your browser to http://127.0.0.1:8000.
 
 ## With Docker
