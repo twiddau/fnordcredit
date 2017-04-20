@@ -8,7 +8,7 @@ fnordcredit is written in Javascript/Node.js/jQuery/rethinkDB.
 
 To start a local development server, have rethinkDB installed and running, then do the following:
 
-	git clone git@github.com:entropia/fnordcredit.git
+	git clone https://github.com/entropia/fnordcredit.git
 	cd fnordcredit
 	npm install
 	cp config.js.example config.js
