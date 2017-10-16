@@ -127,10 +127,6 @@ ul.navbar-nav {
     height: 115px;
 }
 
-.btn-product {
-    height: 250px;
-}
-
 .fullscreen {
     position: fixed;
     width: 100%;
@@ -173,6 +169,6 @@ ul.navbar-nav {
     
 }
 
-.btn-product > img {
+.btn-product img {
     height: 90px;
 }
