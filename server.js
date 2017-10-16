@@ -107,7 +107,7 @@ function serverStart(connection) {
 
                 sock.broadcast.emit('accounts', JSON.stringify(users));
             }
-        }, 10 * 1000);
+        }, 600 * 1000);
 
     });
 }
