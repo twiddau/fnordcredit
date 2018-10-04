@@ -67,7 +67,7 @@
             self.scannerDetectionOff=function(){
                 $self.unbind('keydown.scannerDetection');
                 $self.unbind('keypress.scannerDetection');
-            }
+            };
             self.isFocusOnIgnoredElement=function(){
                 if(!options.ignoreIfFocusOn) return false;
                 if(typeof options.ignoreIfFocusOn === 'string') return $(':focus').is(options.ignoreIfFocusOn);
@@ -80,7 +80,7 @@
                     }
                 }
                 return false;
-            }
+            };
             self.scannerDetectionTest=function(s){
                 // If string is given, test it
                 if(s){
@@ -106,10 +106,10 @@
                     initScannerDetection();
                     return false;
                 }
-            }
+            };
             $self.data('scannerDetection',{options:options}).unbind('.scannerDetection').bind('keydown.scannerDetection',function(e){
                 // If it's just the button of the scanner, ignore it and wait for the real input
-                if(options.scanButtonKeyCode !== false && e.which==options.scanButtonKeyCode) {
+                if(options.scanButtonKeyCode !== false && e.which===options.scanButtonKeyCode) {
                     scanButtonCounter++;
                     // Cancel default
                     e.preventDefault();
@@ -145,7 +145,7 @@
                     e.stopImmediatePropagation();
                     callIsScanner=false;
                 }else{
-                    if (typeof(e.which) != 'undefined'){
+                    if (typeof(e.which) !== 'undefined'){
                         stringWriting+=String.fromCharCode(e.which);
                     }
                     callIsScanner=false;
