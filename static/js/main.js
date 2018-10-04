@@ -1,14 +1,14 @@
-var socket = io.connect(window.location.protocol + '//' + window.location.host);
-var accounts = [];
-var filter = ""
-var sortby = "time" //valid values: time abc zyx
+let socket = io.connect(window.location.protocol + '//' + window.location.host);
+let accounts = [];
+let filter = "";
+let sortby = "time"; //valid values: time abc zyx
 
-var products = [];
+let products = [];
 
 
 dust.helpers.currency = function(chunk, context, bodies, params) {
-    var value = parseFloat(params.value);
-    var prefix = params.prefix;
+    let value = parseFloat(params.value);
+    let prefix = params.prefix;
     
     if (prefix != null) {
         chunk.write(prefix);
@@ -34,7 +34,7 @@ function getUserDetail(username, pincode) {
         },
         error: function (err) {
             releaseUi();
-            if (err.status == 401) {
+            if (err.status === 401) {
                 hidePinpad();
                 showPinpad(username, function (username, pincode) {
                     hidePinpad();
@@ -100,7 +100,7 @@ function showDetail(userData, pincode) {
                     hidePinpad();
                     changePin(username, pincode, newPincode);
                 });
-            })
+            });
 
             changeView("details");
         });
@@ -127,8 +127,8 @@ function getAllUsers() {
     accounts.sort(function (a, b) {
         switch (sortby) {
             case "time":
-                var aDate = new Date(a.lastchanged)
-                var bDate = new Date(b.lastchanged)
+                var aDate = new Date(a.lastchanged);
+                var bDate = new Date(b.lastchanged);
                 return (aDate < bDate) ? 1 : -1;
             case "abc":
                 return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
@@ -141,7 +141,7 @@ function getAllUsers() {
     });
 
     var filtered = accounts.filter(function (account) {
-        return account.name.toLowerCase().indexOf(filter) != -1
+        return account.name.toLowerCase().indexOf(filter) !== -1
     });
 
     $.get('templates/overview.dust.html', function(template) {
@@ -165,18 +165,18 @@ function newUser() {
             $("#view-newuser").html(out);
 
             $("#newUserForm").submit(function (e) {
-                lockUi()
+                lockUi();
                 e.preventDefault();
                 $.ajax({
                     url: '/user/add',
                     type: "POST",
                     data: $('#newUserForm').serialize(),
                     success: function () {
-                        releaseUi()
+                        releaseUi();
                         changeView('accounts');
                     },
                     error: function (err) {
-                        releaseUi()
+                        releaseUi();
                         showFailureOverlay(err.responseText);
                     }
                 });
@@ -192,7 +192,7 @@ function renameUser(userData, pincode) {
             $("#renameuser").html(out);
 
             $("#renameUserForm").submit(function (e) {
-                lockUi()
+                lockUi();
                 e.preventDefault();
                 $.ajax({
                     url: '/user/rename',
@@ -207,7 +207,7 @@ function renameUser(userData, pincode) {
                         releaseUi();
                     },
                     error: function (err) {
-                        releaseUi()
+                        releaseUi();
                         showFailureOverlay(err.responseText);
                     }
                 });
@@ -226,7 +226,7 @@ function changeToken (userData, pincode) {
             $("#changetoken").html(out);
 
             $("#changeTokenForm").submit(function (e) {
-                lockUi()
+                lockUi();
                 e.preventDefault();
                 $.ajax({
                     url: '/user/change-token',
@@ -240,7 +240,7 @@ function changeToken (userData, pincode) {
                         releaseUi();
                     },
                     error: function (err) {
-                        releaseUi()
+                        releaseUi();
                         showFailureOverlay(err.responseText);
                     }
                 });
@@ -267,7 +267,7 @@ function changePin(username, pincode, newPincode) {
             getUserDetail(username, newPincode);
         },
         error: function (err) {
-            releaseUi()
+            releaseUi();
             showFailureOverlay(err.responseText);
         }
     });
@@ -419,14 +419,12 @@ function hidePinpad() {
 }
 
 socket.on('accounts', function (data) {
-    var data = JSON.parse(data);
-    accounts = data;
+    accounts = JSON.parse(data);
     getAllUsers();
 });
 
 socket.on('products', function (data) {
-    var data = JSON.parse(data);
-    products = data;
+    products = JSON.parse(data);
 });
 
 socket.on('ka-ching', function () {
@@ -444,19 +442,20 @@ socket.on('one-up', function () {
 });
 
 function updateFilter() {
-    filter = $("#search input").get(0).value.toLowerCase()
+    filter = $("#search input").get(0).value.toLowerCase();
     changeView("accounts")
 }
 
 function setup() {
 
-    $("#search input").on("input", null, null, updateFilter)
+    $("#search input").on("input", null, null, updateFilter);
     $("#search button").click(function (e) {
         //fix because click fires before the field is actually reseted
         e.preventDefault();
         $("#search").get(0).reset();
         updateFilter();
-    })
+    });
+
     $("#searchtoggle").click(function () {
         if ($("#search").is(":visible")) {
             $("#search").get(0).reset();
@@ -467,7 +466,7 @@ function setup() {
             $("#searchtoggle").addClass("active");
             $("#search").show();
         }
-    })
+    });
     $("#search").hide();
 
 
@@ -487,11 +486,18 @@ function setup() {
 
     $(document).scannerDetection({
         timeBeforeScanTest: 200,
-        avgTimeByChar: 20,
-        ignoreIfFocusOn: 'input',
+        avgTimeByChar: 200,
         onComplete: function (barcode) {
 
-            if (barcode.substr(0, 3) == "<U>") {
+            console.log(typeof document.activeElement);
+            if (["input", "textarea"].indexOf(document.activeElement.tagName.toLowerCase()) !== -1) {
+                console.log("Try to remove the barcode from the focused input field");
+                var activeElement = document.activeElement;
+                activeElement.value = activeElement.value.substring(0, activeElement.value.length - barcode.length);
+            }
+
+            console.log("Found barcode input: " + barcode);
+            if (barcode.substr(0, 3) === "<U>") {
                 // User barcode scanned
                 if ($('#details').is(":visible")) {
                     // Logout from user page
