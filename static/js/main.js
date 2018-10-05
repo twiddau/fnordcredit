@@ -448,6 +448,10 @@ function updateFilter() {
 
 function setup() {
 
+    $("#search input").on("change", function() {
+        updateFilter();
+    });
+
     $("#search input").on("input", null, null, updateFilter);
     $("#search button").click(function (e) {
         //fix because click fires before the field is actually reseted
@@ -486,14 +490,17 @@ function setup() {
 
     $(document).scannerDetection({
         timeBeforeScanTest: 200,
-        avgTimeByChar: 200,
+        avgTimeByChar: 20,
         onComplete: function (barcode) {
 
             console.log(typeof document.activeElement);
             if (["input", "textarea"].indexOf(document.activeElement.tagName.toLowerCase()) !== -1) {
-                console.log("Try to remove the barcode from the focused input field");
-                var activeElement = document.activeElement;
-                activeElement.value = activeElement.value.substring(0, activeElement.value.length - barcode.length);
+                window.setTimeout(function() {
+                    console.log("Try to remove the barcode from the focused input field");
+                    var activeElement = document.activeElement;
+                    activeElement.value = activeElement.value.substring(0, activeElement.value.length - barcode.length);
+                    $(activeElement).trigger("change");
+                }, 2000);
             }
 
             console.log("Found barcode input: " + barcode);
