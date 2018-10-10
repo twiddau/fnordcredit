@@ -1,4 +1,6 @@
 let socket = io.connect(window.location.protocol + '//' + window.location.host);
+let rfidSocket = io.connect("ws://127.0.0.1:23421");
+
 let accounts = [];
 let filter = "";
 let sortby = "time"; //valid values: time abc zyx
@@ -594,3 +596,23 @@ function setSort(by) {
 
 setup();
 changeView('accounts');
+
+
+
+
+rfidSocket.on('tag', function(data) {
+    console.log("Received RFID Tag event: " + data);
+    tag = JSON.parse(data);
+
+    // User barcode scanned
+    if ($('#details').is(":visible")) {
+        // Logout from user page
+        changeView("accounts");
+    } else if ($('#changetoken').is(":visible")) {
+        $('#newtoken').attr("value", tag.uid);
+    } else {
+        // Logout from any other page
+        getUserByToken(tag.uid);
+    }
+
+});
