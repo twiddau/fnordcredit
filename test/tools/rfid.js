@@ -15,7 +15,7 @@ var server = server.listen(23421, function () {
     winston.info('PC/SC RFID server started!');
 
     setInterval(function() {
-        sock.emit('tag', JSON.stringify({'uid': '12345678'}));
+        sock.emit('tag', {'uid': '12345678'});
         winston.info("Sending test RFID token");
     }, 5 * 1000);
 
