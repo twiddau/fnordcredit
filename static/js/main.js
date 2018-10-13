@@ -601,8 +601,9 @@ changeView('accounts');
 
 
 rfidSocket.on('tag', function(data) {
-    console.log("Received RFID Tag event: " + data);
-    tag = JSON.parse(data);
+    console.log("Received RFID Tag event.");
+    console.log(data);
+    tag = data;
 
     // User barcode scanned
     if ($('#details').is(":visible")) {
