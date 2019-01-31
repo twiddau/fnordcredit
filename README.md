@@ -45,7 +45,7 @@ docker run -d \
 	-v /srv/fnordcredit/config.js:/srv/fnordcredit/config.js:ro \
 	-v /srv/fnordcredit/img:/srv/fnordcredit/static/img:ro \
 	-e 8000:8000 \
-	xuio/fnordcredit
+	entropia/fnordcredit
 
 # setup DB
 docker exec fnordcredit node /srv/fnordcredit/tools/dbInit.js
