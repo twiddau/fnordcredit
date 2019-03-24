@@ -501,7 +501,7 @@ function getAllTransactionsAsync(cb) {
 
 
 function getAllProductsAsync(cb) {
-    r.table('products').orderBy('order').run(connection, function (err, table) {
+    r.table('products').filter(r.row("order").ge(0)).orderBy('order').run(connection, function (err, table) {
         if (err) {
             return cb(err, null);
         }
