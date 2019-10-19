@@ -24,7 +24,16 @@ var sock = {
 };
 
 process.stdin.resume();
-winston.add(winston.transports.File, { filename: 'credit.log', json: false });
+
+const logger = winston.createLogger({
+    level: 'debug',
+    format: winston.format.simple(),
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'credit.log' })
+    ]
+});
+
 var users;
 
 
@@ -44,7 +53,7 @@ app.use(function(req, res, next) {
 });
 
 app.use('/', express.static(__dirname + '/static'));
-app.use(bodyParser());
+app.use(bodyParser.urlencoded({extended: true}));
 
 
 
@@ -94,13 +103,13 @@ function serverStart(connection) {
         });
 
     var server = server.listen(8000, function () {
-        winston.info('Server started!');
+        logger.info('Server started!');
 
         setInterval(function() {
             if (sock.broadcast) {
                 getAllUsersAsync(function (err, users) {
                     if (err) {
-                        return res.send(500, 'Error retrieving users from database');
+                        return res.status(500).send('Error retrieving users from database');
                     }
                     sock.broadcast.emit('accounts', JSON.stringify(users));
                 });
@@ -118,7 +127,7 @@ app.get('/users/all', function (req, res) {
     getAllUsersAsync(function (err, users) {
 
         if (err) {
-            return res.send(500, 'Can\'t retrieve users from database');
+            return res.status(500).send('Can\'t retrieve users from database');
         }
 
         res.send(JSON.stringify(users));
@@ -136,21 +145,21 @@ app.get('/user/:username', function (req, res) {
         getUserAsync(username, function (err, user) {
 
             if (err) {
-                return res.send(500, 'Error retrieving user ' + username + ' from database');
+                return res.status(500).send('Error retrieving user ' + username + ' from database');
             }
 
             var newname = req.body.newname;
 
             if (user == undefined) {
-                res.send(404, 'User not found');
-                winston.error('[userCredit] No user ' + username + ' found.')
+                res.status(404).send('User not found');
+                logger.error('[userCredit] No user ' + username + ' found.')
                 return;
             }
 
             return res.send(JSON.stringify(user));
         });
     }, function () {
-        return res.send(401, 'Authorization required')
+        return res.status(401).send('Authorization required')
     });
 });
 
@@ -158,10 +167,10 @@ app.get('/transactions/all', function (req, res) {
 
     getAllTransactionsAsync(function (err, data) {
         if (err) {
-           return res.send(500, 'Can\'t retrieve transactions from database');
+           return res.status(500).send('Can\'t retrieve transactions from database');
         }
 
-        res.send(200, JSON.stringify(data));
+        res.send(JSON.stringify(data));
     });
 });
 
@@ -174,13 +183,13 @@ app.get('/transactions/:username', function (req, res) {
         getUserTransactionsAsync(username, function (err, data) {
 
             if (err) {
-                return res.send(500, 'Error retrieving transactions for ' + username)
+                return res.status(500).send('Error retrieving transactions for ' + username)
             }
 
             return res.send(JSON.stringify(data));
         });
     }, function() {
-        return res.send(401, 'Authorization required');
+        return res.status(401).send('Authorization required');
     });
 });
 
@@ -197,14 +206,14 @@ app.post('/user/rename', function (req, res) {
         getUserAsync(username, function (err, user) {
 
             if (err) {
-                return res.send(500, 'Error retrieving user ' + username + ' from database');
+                return res.status(500).send('Error retrieving user ' + username + ' from database');
             }
 
             var newname = req.body.newname;
 
             if (user == undefined) {
-                res.send(404, 'User not found');
-                winston.error('[userCredit] No user ' + username + ' found.')
+                res.status(404).send('User not found');
+                logger.error('[userCredit] No user ' + username + ' found.')
                 return;
             }
 
@@ -213,18 +222,18 @@ app.post('/user/rename', function (req, res) {
             getAllUsersAsync(function (err, users) {
 
                 if (err) {
-                    return res.send(500, 'Error retrieving users from database');
+                    return res.status(500).send('Error retrieving users from database');
                 }
 
                 sock.broadcast.emit('accounts', JSON.stringify(users));
                 sock.emit('accounts', JSON.stringify(users));
 
-                res.send(200, JSON.stringify(user));
+                res.send(JSON.stringify(user));
             });
 
         })
     }, function() {
-        return res.send(401, 'Authorization required');
+        return res.status(401).send('Authorization required');
     });
 });
 
@@ -239,45 +248,45 @@ app.post('/user/credit', function (req, res) {
         getFullUserAsync(username, function (err, user) {
 
             if(err) {
-                winston.error('[userCredit] database error while retrieving user');
-                return res.send(500, 'Error retrieving ' + username + ' from database ');
+                logger.error('[userCredit] database error while retrieving user');
+                return res.status(500).send('Error retrieving ' + username + ' from database ');
             }
 
             var delta = parseFloat(req.body.delta);
 
             if (user == undefined) {
-                res.send(404, 'User not found');
-                winston.error('[userCredit] No user ' + username + ' found.')
+                res.status(404).send('User not found');
+                logger.error('[userCredit] No user ' + username + ' found.')
                 return;
             }
             if (isNaN(delta) || delta >= 100 || delta <= -100) {
-                res.send(406);
-                winston.error('[userCredit] delta must be a number.');
+                res.status(406).send();
+                logger.error('[userCredit] delta must be a number.');
                 return;
             }
 
             if (delta < 0 && (user.credit + delta) < 0) {
                 if (config.settings.allowDebt == false) {
-                    res.send(406, 'negative credit not allowed in configuration.');
-                    winston.error('[userCredit] negative credit not allowed in configuration');
+                    res.status(406).send('negative credit not allowed in configuration.');
+                    logger.error('[userCredit] negative credit not allowed in configuration');
                     return;
                 }
 
                 if (!user.debtAllowed) {
-                    res.send(406, 'negative credit not allowed for user');
-                    winston.error('[userCredit] negative credit not allowed for user ' + user.name + " - (debtAllowed: " + user.debtAllowed + ")");
+                    res.status(406).send('negative credit not allowed for user');
+                    logger.error('[userCredit] negative credit not allowed for user ' + user.name + " - (debtAllowed: " + user.debtAllowed + ")");
                     return;
                 }
 
                 if ((user.credit + delta) < config.settings.maxDebt) {
-                    res.send(406, 'credit below ' + config.settings.maxDebt + ' € not allowed in configuration.');
-                    winston.error('[userCredit] credit below maxDebt not allowed in configuration');
+                    res.status(406).send('credit below ' + config.settings.maxDebt + ' € not allowed in configuration.');
+                    logger.error('[userCredit] credit below maxDebt not allowed in configuration');
                     return;
                 }
 
                 if ((user.credit + delta) < user.debtHardLimit) {
-                    res.send(406, 'credit below ' + user.debtHardLimit + ' € not allowed for this user');
-                    winston.error('[userCredit] credit below ' + user.debtHardLimit + ' for user ' + user.name + ' not allowed');
+                    res.status(406).send('credit below ' + user.debtHardLimit + ' € not allowed for this user');
+                    logger.error('[userCredit] credit below ' + user.debtHardLimit + ' for user ' + user.name + ' not allowed');
                     return;
                 }
             }
@@ -286,18 +295,18 @@ app.post('/user/credit', function (req, res) {
             getAllUsersAsync(function (err, users) {
 
                 if (err) {
-                    return res.send(500, 'Error retrieving users from database');
+                    return res.status(500).send('Error retrieving users from database');
                 }
 
                 sock.broadcast.emit('accounts', JSON.stringify(users));
                 sock.emit('accounts', JSON.stringify(users));
 
-                res.send(200, JSON.stringify(user));
+                res.send(JSON.stringify(user));
             });
 
         })
     }, function() {
-        return res.send(401, 'Authorization required');
+        return res.status(401).send('Authorization required');
     });
 });
 
@@ -311,13 +320,13 @@ app.post('/user/change-pin', function (req, res) {
         getUserAsync(username, function (err, user) {
 
             if(err) {
-                winston.error('[userCredit] database error while retrieving user');
-                return res.send(500, 'Error retrieving ' + username + ' from database ');
+                logger.error('[userCredit] database error while retrieving user');
+                return res.status(500).send('Error retrieving ' + username + ' from database ');
             }
 
             if (user == undefined) {
-                res.send(404, 'User not found');
-                winston.error('[userCredit] No user ' + username + ' found.')
+                res.status(404).send('User not found');
+                logger.error('[userCredit] No user ' + username + ' found.')
                 return;
             }
 
@@ -325,17 +334,17 @@ app.post('/user/change-pin', function (req, res) {
 
             updatePin(user.name, newPincode, function(err) {
 
-                winston.error(err);
+                logger.error(err);
                 if (err) {
-                    return res.send(500, 'Error updating PIN');
+                    return res.status(500).send('Error updating PIN');
                 }
 
-                res.send(200, 'PIN updated successfully');
+                res.send('PIN updated successfully');
             });
 
         })
     }, function() {
-        return res.send(401, 'Authorization required');
+        return res.status(401).send('Authorization required');
     });
 });
 
@@ -349,13 +358,13 @@ app.post('/user/change-token', function (req, res) {
         getUserAsync(username, function (err, user) {
 
             if(err) {
-                winston.error('[userCredit] database error while retrieving user');
-                return res.send(500, 'Error retrieving ' + username + ' from database ');
+                logger.error('[userCredit] database error while retrieving user');
+                return res.status(500).send('Error retrieving ' + username + ' from database ');
             }
 
             if (user == undefined) {
-                res.send(404, 'User not found');
-                winston.error('[userCredit] No user ' + username + ' found.')
+                res.status(404).send('User not found');
+                logger.error('[userCredit] No user ' + username + ' found.')
                 return;
             }
 
@@ -363,17 +372,17 @@ app.post('/user/change-token', function (req, res) {
 
             updateToken(user.name, newToken, function(err) {
 
-                winston.error(err);
+                logger.error(err);
                 if (err) {
-                    return res.send(500, 'Error updating token');
+                    return res.status(500).send('Error updating token');
                 }
 
-                res.send(200, 'Tokens updated successfully');
+                res.send('Tokens updated successfully');
             });
 
         })
     }, function() {
-        return res.send(401, 'Authorization required');
+        return res.status(401).send('Authorization required');
     });
 });
 
@@ -381,7 +390,7 @@ app.post('/user/change-token', function (req, res) {
 app.get('/products', function(req, res) {
 
     getAllProductsAsync(function (err, data) {
-        res.send(200, JSON.stringify(data));
+        res.send(JSON.stringify(data));
     });
 
 });
@@ -393,8 +402,8 @@ app.get('/token/:token', function (req, res) {
     getUserByTokenAsync(token, function(err, user) {
 
         if (user == null) {
-            res.send(404, 'User not found');
-            winston.error('[userCredit] No user for token ' + token + ' found.');
+            res.status(404).send('User not found');
+            logger.error('[userCredit] No user for token ' + token + ' found.');
             return;
         }
 
@@ -410,7 +419,7 @@ function checkUserPin(username, pincode, cbOk, cbFail) {
     r.table('users').get(username).run(connection, function (err, user) {
 
         if (err || user == null) {
-            winston.error('Could\'nt check PIN for user ' + username);
+            logger.error('Could\'nt check PIN for user ' + username);
             cbFail();
             return;
         }
@@ -520,20 +529,20 @@ function addUser(username, res) {
         pincode: null
     }).run(connection, function (err, dbres) {
         if (dbres.errors) {
-            winston.error('Couldn\'t save user ' + username + err);
-            res.send(409, "User exists already.");
+            logger.error('Couldn\'t save user ' + username + err);
+            res.status(409).send("User exists already.");
         } else {
             getAllUsersAsync(function (err, users) {
 
                 if (err) {
-                    return res.send(500, 'Error retrieving users from database');
+                    return res.status(500).send('Error retrieving users from database');
                 }
 
                 sock.broadcast.emit('accounts', JSON.stringify(users));
                 sock.emit('accounts', JSON.stringify(users));
 
                 res.send(200);
-                winston.info('[addUser] New user ' + username + ' created');
+                logger.info('[addUser] New user ' + username + ' created');
                 return true;
             });
         }
@@ -555,16 +564,16 @@ function renameUser(user, newname, pincode, res) {
         pincode: pincode
     }).run(connection, function (err, dbres) {
         if (dbres.errors) {
-            winston.error('Couldn\'t save user ' + newname);
-            res.send(409, 'That username is already taken');
+            logger.error('Couldn\'t save user ' + newname);
+            res.status(409).send('That username is already taken');
         } else {
             r.table("users")
                 .filter({name: user.name})
                 .delete()
                 .run(connection, function (err) {
                     if (err) {
-                        winston.error('Couldn\'t delete old user ' + user.name);
-                        res.send(409, 'Can\'t delete old user');
+                        logger.error('Couldn\'t delete old user ' + user.name);
+                        res.status(409).send('Can\'t delete old user');
                     }
                 });
             r.table("transactions")
@@ -572,10 +581,12 @@ function renameUser(user, newname, pincode, res) {
                 .update({username: newname})
                 .run(connection, function (err) {
                     if (err) {
-                        winston.error('Couldn\'t update transactions of old user ' + user.name);
-                        res.send(409, 'Can\'t update transactions!');
+                        logger.error('Couldn\'t update transactions of old user ' + user.name);
+                        res.status(409).send('Can\'t update transactions!');
                     }
                 });
+
+            logger.info("User " + user.name + " renamed to " +  newname);
         }
     });
 }
@@ -596,23 +607,24 @@ function updateCredit(user, delta, description, product) {
         time: r.now(),
         description: description,
         product: product
-    }
+    };
 
     r.table("transactions").insert(transaction).run(connection, function (err) {
         if (err) {
-            winston.error('Couldn\'t save transaction for user ' + user.name + err);
+            logger.error('Couldn\'t save transaction for user ' + user.name + err);
         }
 
         if (config.mqtt.enable) {
             mqttPost('transactions', transaction);
         }
     });
+
     r.table("users")
         .filter({name: user.name})
         .update({credit: user.credit, lastchanged: r.now()})
         .run(connection, function (err) {
             if (err) {
-                winston.error('Couldn\'t save transaction for user ' + user.name + err);
+                logger.error('Couldn\'t save transaction for user ' + user.name + err);
             }
         });
 
@@ -622,7 +634,7 @@ function updateCredit(user, delta, description, product) {
         sock.emit('one-up', JSON.stringify(users));
     }
 
-    winston.info('[userCredit] Changed credit from user ' + user.name + ' by ' + delta + '. New credit: ' + user.credit);
+    logger.info('[userCredit] Changed credit from user ' + user.name + ' by ' + delta + '. New credit: ' + user.credit);
 }
 
 function mqttPost(service, payload) {
@@ -631,11 +643,11 @@ function mqttPost(service, payload) {
 }
 
 function criticalError(errormsg) {
-    winston.error(errormsg);
+    logger.error(errormsg);
     process.exit(1);
 }
 
 process.on('SIGTERM', function () {
-    winston.info('Server shutting down. Good bye!');
+    logger.info('Server shutting down. Good bye!');
     process.exit();
 });
