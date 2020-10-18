@@ -17,13 +17,24 @@ To start a local development server, have [rethinkDB](https://rethinkdb.com/) in
 As last step, start the local development server using ```npm start``` and point your browser to http://127.0.0.1:8000.
 
 ## With Docker
+### Using Docker Compose file
+#### Build and start containers
+```docker-compose up --build 
+```
 
-### Create network
+#### Setup database
+```docker exec $(docker ps -aq --filter ancestor=fnordcredit_fnordcredit -l) node /srv/fnordcredit/tools/dbInit.js
+docker restart $(docker ps -aq --filter ancestor=fnordcredit_fnordcredit -l)
+```
+
+
+### Traditional way
+#### Create network
 ```bash
 docker network create fnordcredit
 ```
 
-### Deploy Rethinkdb
+#### Deploy Rethinkdb
 ```bash
 docker run -d \
 	--name fnordcredit-rethinkdb \
@@ -32,10 +43,10 @@ docker run -d \
 	rethinkdb
 ```
 
-### Create config file
+#### Create config file
 Copy config-docker.js.example to ```/srv/fnordcredit/config.js``` on the host system
 
-### Deploy Fnordcredit
+#### Deploy Fnordcredit
 ```bash
 # create container
 docker run -d \
