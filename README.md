@@ -54,7 +54,7 @@ Copy config-docker.js.example to ```/srv/fnordcredit/config.js``` on the host sy
 docker run -d \
 	--name fnordcredit \
 	--network fnordcredit \
-	--link fnordcredit-rethinkdb:rethinkdb \
+	--link fnordcredit-rethinkdb:fnordcredit-rethinkdb \
 	-v /srv/fnordcredit/config.js:/srv/fnordcredit/config.js:ro \
 	-v /srv/fnordcredit/img:/srv/fnordcredit/static/img:ro \
 	-e 8000:8000 \
