@@ -18,7 +18,8 @@ services:
         volumes: 
             - type: bind
               source: ./docker/mosquitto.conf
-              target: /mosquitto/config/mosquitto.conf  
+              target: /mosquitto/config/mosquitto.conf
+              read_only: true
         ports:
             - "1883:1883"
 
