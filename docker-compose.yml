@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+    fnordcredit:
+        build: .
+        ports:
+            - "8000:8000"
+        links:
+            - fnordcredit-rethinkdb
+
+    fnordcredit-rethinkdb:
+        image: rethinkdb
+        volumes:
+            - fnordcredit-rethinkdb:/data
+
+volumes:
+    fnordcredit-rethinkdb: {}
