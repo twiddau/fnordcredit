@@ -20,31 +20,83 @@ dust.helpers.currency = function(chunk, context, bodies, params) {
     return chunk;
 };
 
+dust.helpers.formatDate = function(chunk, context, bodies, params) {
+    var value = dust.helpers.tap(params.value, chunk, context),
+        timestamp,
+        month,
+        date,
+        year;
+    timestamp = new Date(value);
+    
+    month = timestamp.getMonth() + 1;
+    date = timestamp.getDate();
+    year = timestamp.getFullYear();
+    hours = timestamp.getHours();
+    minutes = timestamp.getMinutes();
+    seconds = timestamp.getSeconds();
+
+    if (month.length < 2) month = '0' + month;
+    if (date.length < 2) date = '0' + date;
+
+    return chunk.write(year + '-' + month + '-' + date + ' ' + hours + ':' + minutes + ':' + seconds);
+};
+
 
 function getUserDetail(username, pincode) {
     lockUi();
-    $.ajax({
+
+    var successful = function(userdata, transactions) {
+        console.log("successful");
+        console.log(userdata[0]);
+        console.log(transactions[0]);
+        releaseUi();
+        showDetail(userdata[0], transactions[0], pincode);
+    }
+
+    var error = function(error1, error2) {
+        console.log("error");
+        releaseUi();
+        if (error1.status === 401 || error2.status == 401) {
+            hidePinpad();
+            showPinpad(username, function (username, pincode) {
+                hidePinpad();
+                getUserDetail(username, pincode);
+            });
+            return;
+        }
+
+        var error = "Errors: ";
+        if (error1.responseText) error += error1.responseText + "<br />";
+        if (error2.responseText) error += error2.responseText + "<br />";
+
+        showFailureOverlay(error);
+    }
+
+    var transactions = requestUserLastTransactions(username, pincode);
+    var userdetails = requestUserDetail(username, pincode);
+
+    $.when(userdetails, transactions).then(successful, error);
+
+}
+
+function requestUserDetail(username, pincode) {
+    return $.ajax({
         url: "/user/" + username,
         type: "GET",
         dataType: "json",
         headers: {
             "X-User-Pincode": pincode
-        },
-        success: function (data) {
-            releaseUi();
-            showDetail(data, pincode);
-        },
-        error: function (err) {
-            releaseUi();
-            if (err.status === 401) {
-                hidePinpad();
-                showPinpad(username, function (username, pincode) {
-                    hidePinpad();
-                    getUserDetail(username, pincode);
-                });
-                return;
-            }
-            showFailureOverlay(err.responseText);
+        }
+    });
+}
+
+function requestUserLastTransactions(username, pincode) {
+    return $.ajax({
+        url: "/transactions/" + username + "/last",
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "X-User-Pincode": pincode
         }
     });
 }
@@ -69,15 +121,15 @@ function getUserByToken(token) {
     });
 }
 
-function showDetail(userData, pincode) {
-
+function showDetail(userData, transactions, pincode) {
     var saldo = 0;
     accounts.forEach(function (account) {
         saldo += account.credit;
     });
 
     $.get('templates/user-details.dust.html', function(template) {
-        dust.renderSource(template, {"user": userData, "products": products }, function(err, out) {
+        dust.renderSource(template, {"user": userData, "products": products, "transactions": transactions }, function(err, out) {
+            console.log("render");
             $("#details").html(out);
 
             // Credit buttons
@@ -356,7 +408,7 @@ function changeCredit(userData, pincode, delta, description, product, productObj
                 }
             }
             showSuccessOverlay(message);
-            showDetail(data, pincode);
+            getUserDetail(userData.name, pincode);
             releaseUi();
         },
         error: function (err) {

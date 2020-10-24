@@ -8,13 +8,31 @@
             <ul class="pager">
                 <li class="previous back" data-back-view="accounts"><a>← Back</a></li>
             </ul>
+
+            <ul class="pager">
+                <hr />
+            </ul>
+
+            <ul class="pager">
+                <li class="previous" id="changeSetPinButton">
+                    <a>change/set PIN</a>
+                </li>
+            </ul>
+
+            <ul class="pager">
+                <li class="previous" id="renameButton">
+                    <a>rename user</a>
+                </li>
+            </ul>
+            <ul class="pager">
+                <li class="previous" id="changeTokenButton">
+                    <a>change/set token</a>
+                </li>
+            </ul>
         </div>
 
         <div class="creditarea col-md-9">
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Add credit</h3>
-                </div>
                 <div class="panel-body">
                     <button class="btn btn-success btn-lg btn-credit-action" data-credit="0.5" data-desc="{@currency value="0.5" prefix="+" /}">{@currency value="0.5" prefix="+" /}</button>
                     <button class="btn btn-success btn-lg btn-credit-action" data-credit="1.0" data-desc="{@currency value="1.0" prefix="+" /}">{@currency value="1.0" prefix="+" /}</button>
@@ -32,28 +50,39 @@
                     <br />
                     <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-0.5" data-desc="{@currency value="-0.5" /}">{@currency value="-0.5" /}</button>
                     <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-1.0" data-desc="{@currency value="-1.0" /}">{@currency value="-1.0" /}</button>
+                    <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-1.5" data-desc="{@currency value="-1.5" /}">{@currency value="-1.5" /}</button>
                     <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-2.0" data-desc="{@currency value="-2.0" /}">{@currency value="-2.0" /}</button>
                     <button class="btn btn-danger btn-lg btn-credit-action" data-credit="-5.0" data-desc="{@currency value="-5.0" /}">{@currency value="-5.0" /}</button>
                 </div>
             </div>
 
-        <ul class="pager">
-            <li class="previous" id="changeSetPinButton">
-                <a>change/set PIN</a>
-            </li>
-        </ul>
-
-        <ul class="pager">
-            <li class="previous" id="renameButton">
-                <a>rename user</a>
-            </li>
-        </ul>
-        <ul class="pager">
-            <li class="previous" id="changeTokenButton">
-                <a>change/set token</a>
-            </li>
-        </ul>
-
-    </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Last transactions</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Delta</th>
+                                <th>New credit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#transactions}
+                            <tr>
+                                <td>{@formatDate value=time /}</td>
+                                <td>{description}</td>
+                                <td>{@currency value=delta /}</td>
+                                <td>{@currency value=credit /}</td>
+                            </tr>
+                            {/transactions} 
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 </div>
 {/user}

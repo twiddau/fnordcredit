@@ -193,6 +193,25 @@ app.get('/transactions/:username', function (req, res) {
     });
 });
 
+app.get('/transactions/:username/last', function (req, res) {
+
+    var username = req.params.username;
+    var pincode = req.header("X-User-Pincode");
+
+    checkUserPin(username, pincode, function() {
+        getLastUserTransactionsAsync(username, function (err, data) {
+
+            if (err) {
+                return res.status(500).send('Error retrieving transactions for ' + username)
+            }
+
+            return res.send(JSON.stringify(data));
+        });
+    }, function() {
+        return res.status(401).send('Authorization required');
+    });
+});
+
 app.post('/user/add', function (req, res) {
     addUser(req.body.username, res);
 });
@@ -454,6 +473,7 @@ function updateToken(username, newToken, cb) {
 }
 
 function getUserAsync(username, cb) {
+
     r.table('users').get(username).pluck("name", "lastchanged", "credit").run(connection, cb);
 }
 
@@ -487,6 +507,22 @@ function getAllUsersAsync(cb) {
 function getUserTransactionsAsync(username, cb) {
     r.table('transactions')
         .filter(r.row('username').eq(username))
+        .orderBy(r.desc('time'))
+        .run(connection, function (err, cursor) {
+
+            if (err) {
+                return cb(err, null);
+            }
+
+            cursor.toArray(cb);
+        });
+}
+
+function getLastUserTransactionsAsync(username, cb) {
+    r.table('transactions')
+        .filter(r.row('username').eq(username))
+        .orderBy(r.desc('time'))
+        .limit(5)
         .run(connection, function (err, cursor) {
 
             if (err) {
