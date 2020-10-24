@@ -25,18 +25,24 @@ dust.helpers.formatDate = function(chunk, context, bodies, params) {
         timestamp,
         month,
         date,
-        year;
+        year,
+        hours,
+        minutes,
+        seconds;
     timestamp = new Date(value);
     
-    month = timestamp.getMonth() + 1;
-    date = timestamp.getDate();
-    year = timestamp.getFullYear();
-    hours = timestamp.getHours();
-    minutes = timestamp.getMinutes();
-    seconds = timestamp.getSeconds();
+    month = (timestamp.getMonth() + 1).toString();
+    date = timestamp.getDate().toString();
+    year = timestamp.getFullYear().toString();
+    hours = timestamp.getHours().toString();
+    minutes = timestamp.getMinutes().toString();
+    seconds = timestamp.getSeconds().toString();
 
-    if (month.length < 2) month = '0' + month;
-    if (date.length < 2) date = '0' + date;
+    if (month.length < 2) month = "0" + month;
+    if (date.length < 2) date = "0" + date;
+    if (hours.length < 2) hours = "0" + hours;
+    if (minutes.length < 2) minutes = "0" + minutes;
+    if (seconds.length < 2) seconds = "0" + seconds;
 
     return chunk.write(year + '-' + month + '-' + date + ' ' + hours + ':' + minutes + ':' + seconds);
 };
@@ -46,15 +52,11 @@ function getUserDetail(username, pincode) {
     lockUi();
 
     var successful = function(userdata, transactions) {
-        console.log("successful");
-        console.log(userdata[0]);
-        console.log(transactions[0]);
         releaseUi();
         showDetail(userdata[0], transactions[0], pincode);
     }
 
     var error = function(error1, error2) {
-        console.log("error");
         releaseUi();
         if (error1.status === 401 || error2.status == 401) {
             hidePinpad();
@@ -66,8 +68,8 @@ function getUserDetail(username, pincode) {
         }
 
         var error = "Errors: ";
-        if (error1.responseText) error += error1.responseText + "<br />";
-        if (error2.responseText) error += error2.responseText + "<br />";
+        if (error1.statusText) error += error1.statusText + "<br />";
+        if (error2.statusText) error += error2.statusText + "<br />";
 
         showFailureOverlay(error);
     }
@@ -129,7 +131,6 @@ function showDetail(userData, transactions, pincode) {
 
     $.get('templates/user-details.dust.html', function(template) {
         dust.renderSource(template, {"user": userData, "products": products, "transactions": transactions }, function(err, out) {
-            console.log("render");
             $("#details").html(out);
 
             // Credit buttons
@@ -614,6 +615,8 @@ function setup() {
         changeView($(this).attr("data-back-view"));
     });
 
+
+    $(window).on("click scroll", resetTimer);
 }
 
 
