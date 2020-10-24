@@ -1,6 +1,6 @@
 module.exports = {
     rethinkdb: {
-        host: 'rethinkdb',
+        host: 'fnordcredit-rethinkdb',
         port: 28015,
         db: 'fnordcredit',
         authKey: ''
@@ -12,9 +12,9 @@ module.exports = {
     },
 
     mqtt: {
-        enable: false,
-        host: 'localhost',
-        port: 1882,
+        enable: true,
+        host: 'fnordcredit-mosquitto',
+        port: 1883,
         prefix: 'service/fnordcredit'
     }
 };

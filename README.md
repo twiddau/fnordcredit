@@ -19,11 +19,13 @@ As last step, start the local development server using ```npm start``` and point
 ## With Docker
 ### Using Docker Compose file
 #### Build and start containers
-```docker-compose up --build 
+```bash
+docker-compose up --build 
 ```
 
 #### Setup database
-```docker exec $(docker ps -aq --filter ancestor=fnordcredit_fnordcredit -l) node /srv/fnordcredit/tools/dbInit.js
+```bash
+docker exec $(docker ps -aq --filter ancestor=fnordcredit_fnordcredit -l) node /srv/fnordcredit/tools/dbInit.js
 docker restart $(docker ps -aq --filter ancestor=fnordcredit_fnordcredit -l)
 ```
 
@@ -52,7 +54,7 @@ Copy config-docker.js.example to ```/srv/fnordcredit/config.js``` on the host sy
 docker run -d \
 	--name fnordcredit \
 	--network fnordcredit \
-	--link fnordcredit-rethinkdb:rethinkdb \
+	--link fnordcredit-rethinkdb:fnordcredit-rethinkdb \
 	-v /srv/fnordcredit/config.js:/srv/fnordcredit/config.js:ro \
 	-v /srv/fnordcredit/img:/srv/fnordcredit/static/img:ro \
 	-e 8000:8000 \

@@ -6,11 +6,22 @@ services:
             - "8000:8000"
         links:
             - fnordcredit-rethinkdb
+            - fnordcredit-mosquitto
 
     fnordcredit-rethinkdb:
         image: rethinkdb
         volumes:
             - fnordcredit-rethinkdb:/data
+
+    fnordcredit-mosquitto:
+        image: eclipse-mosquitto
+        volumes: 
+            - type: bind
+              source: ./docker/mosquitto.conf
+              target: /mosquitto/config/mosquitto.conf
+              read_only: true
+        ports:
+            - "1883:1883"
 
 volumes:
     fnordcredit-rethinkdb: {}

@@ -2,27 +2,24 @@
   "name": "fnordcredit",
   "version": "1.0.0",
   "author": "silsha <hallo@silsha.me>",
-  "description": "SAP easy credit system",
+  "description": "SAP easy credit system - Entropia fork",
   "scripts": {
-    "start": "node ./server.js"
+    "start": "node ./server.js",
+    "test": "mocha test"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
-    "dateformat": "1.0.x",
     "express": "^4.17.1",
-    "mqtt": "^3.0.x",
+    "mqtt": "^4.2.x",
     "nan": "^2.14.0",
-    "password-hash": "1.2.2",
-    "q": "1.0.x",
-    "rethinkdb": "1.16.x",
+    "password-hash": "^1.2.2",
+    "q": "^1.5.x",
+    "rethinkdb": "^2.4.2",
     "socket.io": "^2.3.0",
     "winston": "^3.2.x"
   },
   "devDependencies": {
-    "mocha": "^6.2.2"
-  },
-  "script": {
-    "test": "mocha test"
+    "mocha": "^8.2.0"
   },
   "license": "MIT",
   "repository": {
